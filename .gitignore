@@ -1,0 +1,2 @@
+.myenv
+echo ".gitignore" >> $HOME/.gitignore_global
