@@ -52,14 +52,37 @@ class ActivationSoftMax:
         So to make all values smaller we just substract max value.(It will make all exp values between 0 to 1)
         and keep dims means shape will be as it is.
         """
-        print(F"IN EXPONENTIAL {X}")
         exponentialValues = np.exp(X - np.max(X,axis=1, keepdims=True))
         probabilities = exponentialValues / np.sum(exponentialValues, axis=1, keepdims=True)
         self.outputs = probabilities
+
+class Loss:
+    def calculate(self,output,y): #y is Actual Value, output is Predicted Value
+        sample_losses = self.forward(output,y)
+        data_loss = np.mean(sample_losses)
+        return data_loss
+    
+class Loss_CategoricalCrossEntropy(Loss):
+    def forward(self,y_pred,y_true):
+        samples = len(y_pred)
+        y_pred_clip = np.clip(y_pred,1e-7,1-1e-7)
+        # For Categorical-Value
+        if len(y_true.shape) ==1:
+            correct_confidence= (y_pred_clip[
+                                        range(samples),
+                                        y_true])
             
+        # For One-Hot-Encoded
+        elif len(y_true.shape) == 2:
+            correct_confidence = np.sum(y_pred_clip*y_true,axis=1)
+
+        negative_loss_likelihood = -np.log(correct_confidence)
+        return negative_loss_likelihood
+    
+
 X,y = spiral_data(samples=100,classes=3)
 
-print(X.shape)
+# print(X.shape)
 l1 = LayerDense(X.shape[1],3)
 activation1 = ActivationRelu()
 
@@ -71,4 +94,9 @@ activation1.forward(l1.outputs)
 
 l2.forward(activation1.outputs)
 activation2.forward(l2.outputs)
-print(activation2.outputs)
+print(activation2.outputs[:5])
+
+loss_function = Loss_CategoricalCrossEntropy()
+loss = loss_function.calculate(activation2.outputs,y)
+
+print(f"Loss : {loss}")
